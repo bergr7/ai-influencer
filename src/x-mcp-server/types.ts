@@ -1,0 +1,15 @@
+/**
+ * Type definitions for X MCP Server
+ *
+ * Re-exports types from twitter-types package for use across
+ * the X MCP Server implementation.
+ */
+
+// Re-export commonly used types from twitter-types
+export type {
+  APITweet,
+  APIUser,
+  APIMedia,
+  APITweetURLEntity,
+  APITweetReferencedTweet,
+} from 'twitter-types';

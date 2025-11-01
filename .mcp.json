@@ -1,0 +1,31 @@
+{
+    "mcpServers": {
+        "mastra-mcp-server": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@mastra/mcp-docs-server"
+            ]
+        },
+        "documentation-mcp-server": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "-y",
+                "@upstash/context7-mcp"
+            ]
+        },
+        "x-mcp-mock": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "tsx",
+                "src/x-mcp-server/stdio.ts"
+            ],
+            "env": {
+                "LOG_LEVEL": "info"
+            }
+        }
+    }
+}
