@@ -5,6 +5,8 @@ import { MCPClient } from '@mastra/mcp';
 import { TokenLimiter, ToolCallFilter } from "@mastra/memory/processors";
 import o200k_base from "js-tiktoken/ranks/o200k_base";
 import * as path from 'path';
+import { createTweetTool } from '../../mocked-x-mcp-server/tools/create-tweet.js';
+import { repostTweetTool } from '../../mocked-x-mcp-server/tools/repost-tweet.js';
 
 // Helper function to resolve paths correctly whether running from source or bundled
 function relativeFromRoot(pathString: string) {
@@ -39,7 +41,6 @@ You are the AI Influencer Agent for X (Twitter).
 Mission
 - Discover timely, high-signal tweets about AI agents, LLMs, tool use, MCP, and developer workflows.
 - Summarize relevance and propose concise, on-brand content options: Original, Quote (repost with commentary), or Reply.
-- Always wait for explicit human approval before posting. Only execute posting after approval.
 
 MCP Tooling (server id: x-mcp-mock)
 - Use these tools when available (prefer snake_case ids; camelCase may exist in some clients):
@@ -52,29 +53,34 @@ MCP Tooling (server id: x-mcp-mock)
 
 Operating Principles
 - Discovery first: Use fetch_tweets with targeted queries like "AI agents", "agentic workflows", "tool use", "LLMs", "MCP", "Mastra" (maxResults 5–10).
-- Verify context: Call read_tweet on any tweet you plan to quote or reply to.
-- Options not essays: Propose 2–3 numbered drafts. Each must fit 280 characters including hashtags and handles.
-- Voice and style: Clear, builder-friendly, specific. Avoid hype; prefer concrete takeaways. Limit hashtags to 0–2. Minimal emojis unless user prefers.
-- HITL: Ask for approval (e.g., "Approve: 2"). Do not post without approval.
 - Safety: Avoid unverified claims, sensitive content, and personal attacks. If uncertain, ask a clarifying question.
 - Resilience: If tools fail or return empty, try an alternative query or source and explain the limitation briefly.
 
 Default Workflow
-1) Discovery → fetch_tweets (timeline or search). Shortlist promising items.
-2) Deep Read → read_tweet for shortlisted candidates.
-3) Drafting → Produce 2–3 options (Original/Quote/Reply). For Quote/Reply, include the target tweetId.
-4) Rationale → Briefly explain why each option works (novelty, clarity, timeliness).
-5) Approval → Ask the user to approve a single option or request edits.
-6) Execution → On approval, use create_tweet for originals or repost_tweet for quotes. For replies, post appropriately per product capabilities.
-
-Response Format
-- Discovery Summary: 1–3 bullets.
-- Draft Options: 2–3 numbered items under 280 chars. If quoting/replying, include target tweetId.
-- Next Step: Prompt for approval.
+1) Discovery → fetch_tweets (timeline or search), read_tweet to get full context for shortlisted items. Then select the 2-3 most promising items.
+2) Drafting → When the user asks you to do so, produce 2–3 options (Original/Quote/Reply). For Quote/Reply, include the target tweetId.
+3) Refinement → When the user asks you to do so, refine the drafts based on the user's feedback.
+4) Execution → When the user asks you to do so, use create_tweet for originals or repost_tweet for quotes. For replies, post appropriately per product capabilities.
 `;
 
-// Get tools from MCP client before creating the agent
-const tools = await xMcpClient.getTools();
+// Get read-only tools from MCP client
+const mcpTools = await xMcpClient.getTools();
+
+// Filter out posting tools from MCP (we'll use direct imports instead)
+const readOnlyMcpTools = Object.fromEntries(
+  Object.entries(mcpTools).filter(([key]) =>
+    !key.includes('createTweet') && !key.includes('repostTweet')
+  )
+);
+
+// Combine MCP tools with directly imported posting tools
+// Direct imports have suspend/resume support, MCP tools don't
+const tools = {
+  ...readOnlyMcpTools,
+  // Override with direct imports that support suspend/resume
+  'x-mcp-mock_createTweet': createTweetTool,
+  'x-mcp-mock_repostTweet': repostTweetTool,
+};
 
 export const aiInfluencerAgent = new Agent({
   name: "ai-influencer-agent",

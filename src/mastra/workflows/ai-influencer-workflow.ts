@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { discoveryStep } from "./steps/discovery";
 import { hitlSearchCheckpoint } from "./steps/hitl-search-ckpt";
+import { draftGenerationStep } from "./steps/draft-generation";
+import { hitlDraftCheckpoint } from "./steps/hitl-draft-ckpt";
 
 export const aiInfluencerWorkflow = createWorkflow ({
     id: "ai-influencer-workflow",
@@ -17,11 +19,16 @@ export const aiInfluencerWorkflow = createWorkflow ({
         // finalResponse: z.string()
         agentResponse: z.string(),
     }),
-    steps: [discoveryStep, hitlSearchCheckpoint],
+    steps: [discoveryStep, hitlSearchCheckpoint, draftGenerationStep],
 })
     .then(discoveryStep)
     .dountil(
         hitlSearchCheckpoint,
+        ({ inputData }) => Promise.resolve(inputData.approved === true)
+    )
+    .then(draftGenerationStep)
+    .dountil(
+        hitlDraftCheckpoint,
         ({ inputData }) => Promise.resolve(inputData.approved === true)
     )
     .commit();
