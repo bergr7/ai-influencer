@@ -83,11 +83,11 @@ export const aiInfluencerAgent = new Agent({
     content: systemPrompt,
     providerOptions: {
       openai: {
-        verbosity: 'medium'
+        verbosity: 'low'
       }
     }
   },
-  model: "openai/gpt-5",
+  model: "openai/gpt-5-mini",
   tools,
   memory: new Memory({
     processors: [
