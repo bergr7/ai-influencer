@@ -13,7 +13,7 @@ import type { APITweet } from '../types';
 export const createTweetTool = createTool({
   id: 'create_tweet',
   description:
-    'Create a MOCK tweet (no real tweet posted). Returns fake tweet ID and text for testing.',
+    'Create a MOCK tweet (no real tweet posted). Requires approval before posting. Returns fake tweet ID and text for testing.',
   inputSchema: z.object({
     text: z
       .string()
@@ -56,4 +56,5 @@ export const createTweetTool = createTool({
       throw new Error('Failed to create mock tweet: Unknown error occurred');
     }
   },
+  requireApproval: true,
 });
